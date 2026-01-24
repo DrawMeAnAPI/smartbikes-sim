@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartBikes Control Center</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --text-color: #d4d4d4;
+            --accent-color: #007acc;
+            --header-bg: #333;
+        }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+
+        .container { display: flex; flex-direction: column; height: 100vh; }
+
+        /* Map occupies the available space */
+        #map { flex: 1; width: 100%; min-height: 100px; }
+
+        /* Resizer Handle */
+        .resizer {
+            height: 6px;
+            background: #444;
+            cursor: ns-resize;
+            transition: background 0.2s;
+        }
+        .resizer:hover { background: var(--accent-color); }
+
+        /* Floating Legend Box */
+        .map-legend {
+            position: absolute;
+            /* We will control 'bottom' via JavaScript to keep it dynamic */
+            bottom: 270px;
+            right: 15px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.85);
+            padding: 10px 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            border: 1px solid rgba(0,0,0,0.1);
+            transition: bottom 0.1s ease-out; /* Smooth slide when toggling */
+            pointer-events: none; /* Allows clicking markers behind the legend */
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+            box-shadow: 0 0 2px rgba(0,0,0,0.3);
+        }
+
+        .dot.motorbike { background-color: #e74c3c; }
+        .dot.bike { background-color: #3498db; }
+
+        /* Console Container with fixed initial height */
+        .console-container {
+            height: 250px; /* Default height */
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            transition: height 0.1s ease-out;
+        }
+
+        .console-container.collapsed { height: 30px !important; }
+
+        .console-header {
+            background-color: var(--header-bg);
+            padding: 5px 15px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        #console-log {
+            flex: 1;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .log-entry { margin-bottom: 2px; border-left: 2px solid var(--accent-color); padding-left: 8px; }
+        .log-time { color: #85c46c; }
+        .log-id { color: #ce9178; font-weight: bold; }
+
+        .stats-overlay {
+            position: absolute; top: 10px; right: 10px; z-index: 1000;
+            background: rgba(255, 255, 255, 0.9); padding: 8px 12px; border-radius: 4px;
+            font-size: 13px; font-weight: bold; pointer-events: none;
+        }
+
+        .btn-toggle {
+            background: none; border: 1px solid #555; color: white;
+            padding: 2px 8px; cursor: pointer; border-radius: 3px; font-size: 10px;
+        }
+        .btn-toggle:hover { background: #555; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="map"></div>
+    <div class="stats-overlay" id="stats">Connecting...</div>
+
+    <div class="map-legend" id="map-legend">
+        <div class="legend-item">
+            <div class="dot bike"></div> <span>Standard Bike</span>
+        </div>
+        <div class="legend-item">
+            <div class="dot motorbike"></div> <span>Motorbike</span>
+        </div>
+    </div>
+
+    <div class="resizer" id="resizer"></div>
+
+    <div class="console-container" id="console-panel">
+        <div class="console-header" onclick="toggleConsole()">
+            <span>Live Telemetry Stream | <span id="status">Offline</span></span>
+            <button class="btn-toggle" id="toggle-btn">HIDE CONSOLE</button>
+        </div>
+        <div id="console-log"></div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const map = L.map('map').setView([18.788, 98.985], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    const markers = {};
+    const consoleLog = document.getElementById('console-log');
+    const panel = document.getElementById('console-panel');
+    const resizer = document.getElementById('resizer');
+    const toggleBtn = document.getElementById('toggle-btn');
+    const mapLegend = document.getElementById('map-legend');
+    const LEGEND_MARGIN = 20; // Distance between console and legend
+    let isCollapsed = false;
+
+    // --- 1. Resizer Logic ---
+    let isResizing = false;
+
+    // Helper function to keep them in sync
+    function syncLegendPosition() {
+        const panelHeight = panel.offsetHeight;
+        mapLegend.style.bottom = (panelHeight + LEGEND_MARGIN) + "px";
+    }
+
+    resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.body.style.cursor = 'ns-resize';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isResizing || isCollapsed) return;
+        const newHeight = window.innerHeight - e.clientY;
+        // Constraints: min 50px, max 80% of screen
+        if (newHeight > 50 && newHeight < window.innerHeight * 0.8) {
+            panel.style.height = newHeight + "px";
+            syncLegendPosition(); // Sync legend while dragging
+            map.invalidateSize();
+        }
+    });
+
+    document.addEventListener('mouseup', () => {
+        isResizing = false;
+        document.body.style.cursor = 'default';
+    });
+
+    // --- 2. Toggle Logic ---
+    function toggleConsole() {
+        isCollapsed = !isCollapsed;
+        panel.classList.toggle('collapsed');
+        // Update button text
+        const toggleBtn = document.getElementById('toggle-btn');
+        toggleBtn.innerText = isCollapsed ? 'SHOW CONSOLE' : 'HIDE CONSOLE';
+        // Hide resizer bar when console is collapsed so user doesn't drag it by accident
+        document.getElementById('resizer').style.display = isCollapsed ? 'none' : 'block';
+        // Wait for the CSS transition of the 'collapsed' class to finish, then sync
+        setTimeout(() => {
+            syncLegendPosition();
+            map.invalidateSize();
+        }, 110); // Matches the 0.1s CSS transition
+    }
+    // Initial sync on load
+    syncLegendPosition();
+
+    // --- 3. WebSocket Logic ---
+    const socket = new WebSocket('ws://localhost:8080/fleet');
+
+    socket.onopen = () => { document.getElementById('status').innerText = "Online"; };
+
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        const { bikeId, lat, lng, vehicleType, speedKph, timestamp } = data;
+
+        // Update Map
+        if (markers[bikeId]) {
+            markers[bikeId].setLatLng([lat, lng]);
+        } else {
+            const color = vehicleType === 'MOTORBIKE' ? '#e74c3c' : '#3498db';
+            markers[bikeId] = L.circleMarker([lat, lng], {
+                radius: 6, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8
+            }).addTo(map);
+        }
+
+        // Update Popup with live info
+        markers[bikeId].bindPopup(`
+                <b>ID:</b> ${bikeId}<br>
+                <b>Type:</b> ${vehicleType}<br>
+                <b>Speed:</b> ${speedKph.toFixed(1)} km/h
+            `);
+        document.getElementById('stats').innerText = `Fleet: ${Object.keys(markers).length}`;
+
+        // Update Console (only if not collapsed for performance)
+        if (!isCollapsed) {
+            const time = new Date(timestamp).toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-id">${bikeId}</span>: ${JSON.stringify(data)}`;
+            consoleLog.appendChild(entry);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+            if (consoleLog.childNodes.length > 50) consoleLog.removeChild(consoleLog.firstChild);
+        }
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartBikes Live Fleet</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { height: 100vh; width: 100%; }
+        .stats-overlay {
+            position: absolute; top: 10px; right: 10px; z-index: 1000;
+            background: white; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="stats-overlay" id="stats">Waiting for bikes...</div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 1. Initialize the map centered on Chiang Mai
+        const map = L.map('map').setView([18.788, 98.985], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        const markers = {}; // We store markers by bikeId: { marker: L.marker, lastUpdate: Date }
+        let activeBikes = 0;
+
+        // 2. Connect to your Ktor 3.4.0 WebSocket
+        const socket = new WebSocket('ws://localhost:8080/fleet');
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            const { bikeId, lat, lng, vehicleType, speedKph } = data;
+
+            // 3. Update or create the marker
+            if (markers[bikeId]) {
+                markers[bikeId].setLatLng([lat, lng]);
+            } else {
+                activeBikes++;
+                // Simple color logic: Red for Motorbikes, Blue for Bikes
+                const color = vehicleType === 'MOTORBIKE' ? '#e74c3c' : '#3498db';
+                
+                markers[bikeId] = L.circleMarker([lat, lng], {
+                    radius: 8,
+                    fillColor: color,
+                    color: "#fff",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+
+                console.log(`New vehicle detected: ${bikeId}`);
+            }
+
+            // Update Popup with live info
+            markers[bikeId].bindPopup(`
+                <b>ID:</b> ${bikeId}<br>
+                <b>Type:</b> ${vehicleType}<br>
+                <b>Speed:</b> ${speedKph.toFixed(1)} km/h
+            `);
+
+            document.getElementById('stats').innerText = `Active Fleet: ${activeBikes} vehicles`;
+        };
+
+        socket.onopen = () => console.log('Connected to SmartBikes Simulator');
+        socket.onerror = (err) => console.error('WebSocket Error:', err);
+    </script>
+</body>
+</html>
