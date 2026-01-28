@@ -12,9 +12,9 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Collections.synchronizedSet
+import kotlin.time.Clock
 import com.pjmbusnel.smartbikes.model.Route as BikeRoute
 
 // Global state for WebSocket sessions
@@ -23,13 +23,11 @@ private val sessions = synchronizedSet(mutableSetOf<WebSocketServerSession>())
 private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
 
 fun main() {
-    // 1. Start Ktor 3.x Server
     val server = embeddedServer(factory = Netty, port = 8080) {
         install(WebSockets)
         routing {
             webSocket("/fleet") {
-                // In Ktor 3.x, 'this' refers to WebSocketServerSession
-                sessions.add(this)
+                sessions.add(this) // Ktor WebSocketServerSession
                 try {
                     for (frame in incoming) { /* Keep alive */ }
                 } catch (e: Exception) {
@@ -45,71 +43,85 @@ fun main() {
         val loader = ItineraryLoader()
         val routes = loader.loadAssembledRoutes()
 
-        val baseRoute = routes.find { it.id == "trip-full-ring" }
-            ?: throw IllegalStateException("Trip 'trip-full-ring' not found!")
-
-        println("--- Starting Simulation (Ktor 3.x + K2) ---")
+        println("--- Starting Simulation ---")
         val tickSeconds = 5
 
-        val forwardJob = launch {
-            delay((0..5000).random().toLong())
-            runVehicle("B-RING-FWD", baseRoute, VehicleType.BIKE, tickSeconds, this)
+        // We create a list to track all our active jobs
+        val allJobs = mutableListOf<Job>()
+
+        routes.forEachIndexed { index, baseRoute ->
+            println("Launching fleet for trip: ${baseRoute.name}")
+
+            // 1. Launch Forward Vehicle for this specific trip
+            allJobs += launch {
+                // Give each trip a tiny staggered start so the logs are readable
+                delay(index * 500L)
+                runVehicle("F-${baseRoute.id}", baseRoute, VehicleType.BIKE, tickSeconds, this)
+            }
+
+            // 2. Create and Launch Reverse Vehicle for this specific trip
+            val reverseRoute = baseRoute.copy(
+                id = "${baseRoute.id}-REV",
+                points = baseRoute.points.reversed()
+            )
+
+            allJobs += launch {
+                delay(index * 1000L + 500) // Slight offset from the forward vehicle
+                runVehicle("R-${baseRoute.id}", reverseRoute, VehicleType.MOTORBIKE, tickSeconds, this)
+            }
         }
 
-        val reverseRoute = baseRoute.copy(
-            id = "${baseRoute.id}-REV",
-            points = baseRoute.points.reversed()
-        )
-
-        val reverseJob = launch {
-            delay((0..5000).random().toLong())
-            runVehicle("M-RING-REV", reverseRoute, VehicleType.MOTORBIKE, tickSeconds, this)
-        }
-
-        joinAll(forwardJob, reverseJob)
-        server.stop(1000, 2000)
+        allJobs.joinAll()
+        println("All vehicles have reached their destinations.")
     }
 }
 
 suspend fun runVehicle(
     id: String,
-    route: BikeRoute,
-    type: VehicleType,
+    initialRoute: BikeRoute,
+    initialType: VehicleType,
     tickSeconds: Int,
-    scope: CoroutineScope // We pass the scope from main
+    scope: CoroutineScope
 ) {
-    val engine = MovementEngine(route, type.baseSpeedKph)
+    var currentRoute = initialRoute
+    var currentType = initialType
 
-    while (!engine.isFinished()) {
-        val newPos = engine.tick(tickSeconds)
-        val timeLabel = LocalTime.now().format(timeFormatter)
+    while (true) {
+        val engine = MovementEngine(currentRoute, currentType.baseSpeedKph)
+        println("Vehicle $id starting leg as ${currentType.name} on route ${currentRoute.id}")
 
-        val telemetry = Telemetry(
-            bikeId = id,
-            vehicleType = type.name,
-            lat = newPos.lat,
-            lng = newPos.lng,
-            speedKph = engine.currentSpeedKph
-        )
+        while (!engine.isFinished()) {
+            val newPos = engine.tick(tickSeconds)
 
-        val json = jsonMapper.writeValueAsString(telemetry)
-        println("[$timeLabel] $json")
+            val telemetry = Telemetry(
+                bikeId = id,
+                vehicleType = currentType.name,
+                lat = newPos.lat,
+                lng = newPos.lng,
+                speedKph = engine.currentSpeedKph,
+                timestamp = Clock.System.now().toString()
+            )
 
-        // --- THE FIX IS HERE ---
-        // We use the scope passed from runBlocking to launch the broadcast
-        synchronized(sessions) {
-            sessions.toList().forEach { session ->
-                scope.launch { // Explicitly use the passed scope
-                    try {
-                        session.send(json)
-                    } catch (e: Exception) {
-                        // Session likely closed, handled by finally block in main
-                        println("Exception caught: $e")
+            val json = jsonMapper.writeValueAsString(telemetry)
+
+            synchronized(sessions) {
+                sessions.toList().forEach { session ->
+                    scope.launch {
+                        try {
+                            session.send(json)
+                        } catch (e: Exception) {
+                            // Session management handled by WebSocket routing finally block
+                        }
                     }
                 }
             }
+            delay(tickSeconds * 1000L)
         }
 
-        delay(tickSeconds * 1000L)
+        println("Vehicle $id reached end of leg. Reversing and swapping type...")
+        currentRoute = currentRoute.copy(
+            points = currentRoute.points.reversed()
+        )
+        delay(2000L)
     }
 }

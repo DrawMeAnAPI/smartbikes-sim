@@ -19,6 +19,7 @@ data class Route(
 /**
  * Represents a single reusable path between two points.
  */
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 data class Segment(
     val id: String,
     val points: List<Coordinate>

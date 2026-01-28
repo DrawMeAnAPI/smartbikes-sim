@@ -33,7 +33,7 @@ class ItineraryLoader {
                 val segment = library.segments.find { it.id == segId }
                 if (segment != null) {
                     // To avoid duplicating the meeting point of two segments,
-                    // we drop the first point of subsequent segments.
+                    // drop the first point of subsequent segments.
                     if (allPoints.isEmpty()) {
                         allPoints.addAll(segment.points)
                     } else {
