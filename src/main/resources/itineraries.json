@@ -36,6 +36,44 @@
         { "lat": 18.7834797, "lng": 99.0268356 },
         { "lat": 18.7644677, "lng": 99.0293407 }
       ]
+    },
+    {
+      "id": "mah-seg-1",
+      "name": "Mahidol West Entrance",
+      "points": [
+        {"lat": 18.7720425, "lng": 98.9690412},
+        {"lat": 18.771192, "lng": 98.9733902},
+        {"lat": 18.7701042, "lng": 98.9756397}
+      ]
+    },
+    {
+      "id": "mah-seg-2",
+      "name": "Mahidol Central Stretch",
+      "points": [
+        {"lat": 18.7701042, "lng": 98.9756397},
+        {"lat": 18.7689259, "lng": 98.9774422},
+        {"lat": 18.7673412, "lng": 98.9849094},
+        {"lat": 18.7651876, "lng": 98.9909605},
+        {"lat": 18.7569751, "lng": 99.0010997},
+        {"lat": 18.7580316, "lng": 99.0071937}
+      ]
+    },
+    {
+      "id": "mah-seg-3",
+      "name": "Mahidol East Connector",
+      "points": [
+        {"lat": 18.7580316, "lng": 99.0071937},
+        {"lat": 18.7592249, "lng": 99.0140211},
+        {"lat": 18.761338, "lng": 99.0199434}
+      ]
+    },
+    {
+      "id": "mah-seg-4",
+      "name": "Mahidol Far East",
+      "points": [
+        {"lat": 18.761338, "lng": 99.0199434},
+        {"lat": 18.7644677, "lng": 99.0293407}
+      ]
     }
   ],
   "trips": [
@@ -43,6 +81,11 @@
       "id": "trip-full-ring",
       "name": "Full Ring Delivery",
       "segmentIds": ["ring-1-5", "ring-5-7", "ring-7-8", "ring-8"]
+    },
+    {
+      "id": "1141-Mahidol",
+      "name": "Highway 1141 Full Run",
+      "segmentIds": ["mah-seg-1", "mah-seg-2", "mah-seg-3", "mah-seg-4"]
     }
   ]
 }
