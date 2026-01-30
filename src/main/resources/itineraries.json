@@ -1,91 +1,301 @@
 {
   "segments": [
     {
-      "id": "ring-1-5",
+      "id": "ring-seg-1",
+      "name": "Ring Road West (R1)",
       "points": [
-        { "lat": 18.7875579, "lng": 98.9626137 },
-        { "lat": 18.8012747, "lng": 98.9678656 },
-        { "lat": 18.8072031, "lng": 98.9722158 },
-        { "lat": 18.8103514, "lng": 98.9770652 },
-        { "lat": 18.8119064, "lng": 98.984017 },
-        { "lat": 18.8119876, "lng": 98.9902925 },
-        { "lat": 18.8111346, "lng": 98.9953994 }
+        { "lat": 18.7875579, "lng": 98.9626137, "name": "R1a" },
+        { "lat": 18.8012747, "lng": 98.9678656, "name": "R1b-R3a" }
       ]
     },
     {
-      "id": "ring-5-7",
+      "id": "ring-seg-2",
+      "name": "Ring Road Northwest (R1-R3)",
       "points": [
-        { "lat": 18.8111346, "lng": 98.9953994 },
-        { "lat": 18.8100738, "lng": 99.0046415 },
-        { "lat": 18.8091679, "lng": 99.012482 },
-        { "lat": 18.8073398, "lng": 99.0158938 },
-        { "lat": 18.8038844, "lng": 99.0182447 }
+        { "lat": 18.8012747, "lng": 98.9678656, "name": "R1b-R3a" },
+        { "lat": 18.8072031, "lng": 98.9722158, "name": "R3b" },
+        { "lat": 18.8103514, "lng": 98.9770652, "name": "R3c" },
+        { "lat": 18.8119064, "lng": 98.984017, "name": "R3d-R4a" }
       ]
     },
     {
-      "id": "ring-7-8",
+      "id": "ring-seg-3",
+      "name": "Ring Road North (R3-R5)",
       "points": [
-        { "lat": 18.8038844, "lng": 99.0182447 },
-        { "lat": 18.7898179, "lng": 99.0246469 },
-        { "lat": 18.7834797, "lng": 99.0268356 }
+        { "lat": 18.8119064, "lng": 98.984017, "name": "R3d-R4a" },
+        { "lat": 18.8119876, "lng": 98.9902925, "name": "R4b" },
+        { "lat": 18.8111346, "lng": 98.9953994, "name": "R4c-R5a" }
       ]
     },
     {
-      "id": "ring-8",
+      "id": "ring-seg-4",
+      "name": "Ring Road Northeast (R5-R7)",
       "points": [
-        { "lat": 18.7834797, "lng": 99.0268356 },
-        { "lat": 18.7644677, "lng": 99.0293407 }
+        { "lat": 18.8111346, "lng": 98.9953994, "name": "R4c-R5a" },
+        { "lat": 18.8100738, "lng": 99.0046415, "name": "R5b-R6a" },
+        { "lat": 18.8091679, "lng": 99.012482, "name": "R6b" },
+        { "lat": 18.8073398, "lng": 99.0158938, "name": "R6c" },
+        { "lat": 18.8038844, "lng": 99.0182447, "name": "R6d-R7a" }
+      ]
+    },
+    {
+      "id": "ring-seg-5",
+      "name": "Ring Road East (R7)",
+      "points": [
+        { "lat": 18.8038844, "lng": 99.0182447, "name": "R6d-R7a" },
+        { "lat": 18.7898179, "lng": 99.0246469, "name": "R7b" },
+        { "lat": 18.7834797, "lng": 99.0268356, "name": "R7c-R8a" }
+      ]
+    },
+    {
+      "id": "ring-seg-6",
+      "name": "Ring Road South-East R8)",
+      "points": [
+        { "lat": 18.7834797, "lng": 99.0268356, "name": "R7c-R8a" },
+        { "lat": 18.7644677, "lng": 99.0293407, "name": "R8b-R9a" }
       ]
     },
     {
       "id": "mah-seg-1",
       "name": "Mahidol West Entrance",
       "points": [
-        {"lat": 18.7720425, "lng": 98.9690412},
-        {"lat": 18.771192, "lng": 98.9733902},
-        {"lat": 18.7701042, "lng": 98.9756397}
+        { "lat": 18.7720425, "lng": 98.9690412, "name": "Mah1a" },
+        { "lat": 18.771192, "lng": 98.9733902, "name": "Mah1b" },
+        { "lat": 18.7701042, "lng": 98.9756397, "name": "Mah1c-Mah2a" }
       ]
     },
     {
       "id": "mah-seg-2",
       "name": "Mahidol Central Stretch",
       "points": [
-        {"lat": 18.7701042, "lng": 98.9756397},
-        {"lat": 18.7689259, "lng": 98.9774422},
-        {"lat": 18.7673412, "lng": 98.9849094},
-        {"lat": 18.7651876, "lng": 98.9909605},
-        {"lat": 18.7569751, "lng": 99.0010997},
-        {"lat": 18.7580316, "lng": 99.0071937}
+        { "lat": 18.7701042, "lng": 98.9756397, "name": "Mah1c-Mah2a" },
+        { "lat": 18.7689259, "lng": 98.9774422, "name": "Mah2b-Mah3a" },
+        { "lat": 18.7673412, "lng": 98.9849094, "name": "Mah3b" },
+        { "lat": 18.7651876, "lng": 98.9909605, "name": "Mah3c" },
+        { "lat": 18.7569751, "lng": 99.0010997, "name": "Mah3c" },
+        { "lat": 18.7580316, "lng": 99.0071937, "name": "Mah3d-Mah4a" }
       ]
     },
     {
       "id": "mah-seg-3",
       "name": "Mahidol East Connector",
       "points": [
-        {"lat": 18.7580316, "lng": 99.0071937},
-        {"lat": 18.7592249, "lng": 99.0140211},
-        {"lat": 18.761338, "lng": 99.0199434}
+        { "lat": 18.7580316, "lng": 99.0071937, "name": "Mah3d-Mah4a" },
+        { "lat": 18.7592249, "lng": 99.0140211, "name": "Mah4b" },
+        { "lat": 18.761338, "lng": 99.0199434, "name": "Mah4c-Mah5a" }
       ]
     },
     {
       "id": "mah-seg-4",
       "name": "Mahidol Far East",
       "points": [
-        {"lat": 18.761338, "lng": 99.0199434},
-        {"lat": 18.7644677, "lng": 99.0293407}
+        { "lat": 18.761338, "lng": 99.0199434, "name": "Mah4c-Mah5a" },
+        { "lat": 18.7644677, "lng": 99.0293407, "name": "Mah5b" }
+      ]
+    },
+    {
+      "id": "conn-nw",
+      "name": "Northwest Connector",
+      "points": [
+        { "lat": 18.8012747, "lng": 98.9678656, "name": "NW1" },
+        { "lat": 18.7960133, "lng": 98.9782205, "name": "NW2" }
+      ]
+    },
+    {
+      "id": "conn-n",
+      "name": "North Vertical Arterial",
+      "points": [
+        { "lat": 18.8119064, "lng": 98.984017, "name": "N1" },
+        { "lat": 18.8095087, "lng": 98.9849036, "name": "N2" },
+        { "lat": 18.8052838, "lng": 98.9853542, "name": "N3" },
+        { "lat": 18.8007948, "lng": 98.9859186, "name": "N4" },
+        { "lat": 18.7984884, "lng": 98.9862083, "name": "N5" },
+        { "lat": 18.795819, "lng": 98.9862886, "name": "N6" }
+      ]
+    },
+    {
+      "id": "conn-ne",
+      "name": "Northeast Vertical Arterial",
+      "points": [
+        { "lat": 18.8111346, "lng": 98.9953994, "name": "NE1" },
+        { "lat": 18.8039848, "lng": 98.9948274, "name": "NE2" },
+        { "lat": 18.801791, "lng": 98.9951707, "name": "NE3" },
+        { "lat": 18.7999832, "lng": 98.9950013, "name": "NE4" },
+        { "lat": 18.7955346, "lng": 98.9939691, "name": "NE5" }
+      ]
+    },
+    {
+      "id": "conn-kae",
+      "name": "Kaew Nawarat Corridor",
+      "points": [
+        { "lat": 18.7955346, "lng": 98.9939691, "name": "Kae1" },
+        { "lat": 18.794851, "lng": 98.9944687, "name": "Kae2" },
+        { "lat": 18.7947697, "lng": 98.9964857, "name": "Kae3" },
+        { "lat": 18.7921136, "lng": 98.9976799, "name": "Kae4" },
+        { "lat": 18.7940401, "lng": 99.001097, "name": "Kae5" },
+        { "lat": 18.79743, "lng": 99.0081864, "name": "Kae6" },
+        { "lat": 18.8005986, "lng": 99.0136367, "name": "Kae7" },
+        { "lat": 18.8037064, "lng": 99.0180355, "name": "Kae8" }
+      ]
+    },
+    {
+      "id": "conn-cha-muang",
+      "name": "Charoen Muang - East Spine",
+      "points": [
+        { "lat": 18.7878717, "lng": 98.9936226, "name": "E1" },
+        { "lat": 18.7881054, "lng": 98.9959615, "name": "E2" },
+        { "lat": 18.7883187, "lng": 99.001122, "name": "E3" },
+        { "lat": 18.7878616, "lng": 99.001122, "name": "E4" },
+        { "lat": 18.7875772, "lng": 99.0025811, "name": "E5" },
+        { "lat": 18.7876609, "lng": 99.0052532, "name": "Cha1" },
+        { "lat": 18.7869963, "lng": 99.0087167, "name": "Cha2" },
+        { "lat": 18.7861939, "lng": 99.0128688, "name": "Cha3" },
+        { "lat": 18.7855038, "lng": 99.0163932, "name": "Cha4" },
+        { "lat": 18.7848153, "lng": 99.0199196, "name": "Cha5" },
+        { "lat": 18.7835629, "lng": 99.0265229, "name": "Cha6" }
+      ]
+    },
+    {
+      "id": "os-seg-north-a",
+      "name": "Old City North (West Section)",
+      "points": [
+        { "lat": 18.7959848, "lng": 98.9783144, "name": "OS-1" },
+        { "lat": 18.7958735, "lng": 98.9816355, "name": "OS-2" },
+        { "lat": 18.7957871, "lng": 98.9841246, "name": "OS-3" },
+        { "lat": 18.7957767, "lng": 98.9864057, "name": "OS-4" }
+      ]
+    },
+    {
+      "id": "os-seg-north-b",
+      "name": "Old City North (East Section)",
+      "points": [
+        { "lat": 18.7957767, "lng": 98.9864057, "name": "OS-4" },
+        { "lat": 18.7956086, "lng": 98.9901016, "name": "OS-5" },
+        { "lat": 18.7954563, "lng": 98.9938889, "name": "OS-6" }
+      ]
+    },
+    {
+      "id": "os-seg-east-a",
+      "name": "Old City East (Upper)",
+      "points": [
+        { "lat": 18.7954563, "lng": 98.9938889, "name": "OS-6" },
+        { "lat": 18.7904631, "lng": 98.9936889, "name": "OS-7" }
+      ]
+    },
+    {
+      "id": "os-seg-east-b",
+      "name": "Old City East (Junction)",
+      "points": [
+        { "lat": 18.7904631, "lng": 98.9936889, "name": "OS-7" },
+        { "lat": 18.7902651, "lng": 98.9936723, "name": "OS-8" }
+      ]
+    },
+    {
+      "id": "os-seg-east-c",
+      "name": "Old City East (Mid)",
+      "points": [
+        { "lat": 18.7902651, "lng": 98.9936723, "name": "OS-8" },
+        { "lat": 18.7879208, "lng": 98.9936245, "name": "OS-9" }
+      ]
+    },
+    {
+      "id": "os-seg-east-d",
+      "name": "Old City East (Lower)",
+      "points": [
+        { "lat": 18.7879208, "lng": 98.9936245, "name": "OS-9" },
+        { "lat": 18.7875721, "lng": 98.9937644, "name": "OS-10" },
+        { "lat": 18.7868108, "lng": 98.9935317, "name": "OS-11" },
+        { "lat": 18.7850431, "lng": 98.9933374, "name": "OS-12" }
+      ]
+    },
+    {
+      "id": "os-seg-se-corner",
+      "name": "SE Corner Pivot",
+      "points": [
+        { "lat": 18.7850431, "lng": 98.9933374, "name": "OS-12" },
+        { "lat": 18.7825749, "lng": 98.9931603, "name": "OS-13" }
+      ]
+    },
+    {
+      "id": "os-seg-south-a",
+      "name": "Old City South (East Section)",
+      "points": [
+        { "lat": 18.7825749, "lng": 98.9931603, "name": "OS-13" },
+        { "lat": 18.7810846, "lng": 98.9929979, "name": "OS-14" },
+        { "lat": 18.7809932, "lng": 98.9927946, "name": "OS-15" }
+      ]
+    },
+    {
+      "id": "os-seg-south-b",
+      "name": "Old City South (Gate Section)",
+      "points": [
+        { "lat": 18.7809932, "lng": 98.9927946, "name": "OS-15" },
+        { "lat": 18.7809881, "lng": 98.9909868, "name": "OS-16" },
+        { "lat": 18.781087, "lng": 98.9891715, "name": "OS-17" }
+      ]
+    },
+    {
+      "id": "os-seg-south-c",
+      "name": "Old City South (Market Access)",
+      "points": [
+        { "lat": 18.781087, "lng": 98.9891715, "name": "OS-17" },
+        { "lat": 18.7811226, "lng": 98.9887263, "name": "OS-18" }
+      ]
+    },
+    {
+      "id": "os-seg-south-d",
+      "name": "Old City South (Mid Section)",
+      "points": [
+        { "lat": 18.7811226, "lng": 98.9887263, "name": "OS-18" },
+        { "lat": 18.7811276, "lng": 98.9881332, "name": "OS-19" }
+      ]
+    },
+    {
+      "id": "os-seg-south-e",
+      "name": "Old City South (West Section)",
+      "points": [
+        { "lat": 18.7811276, "lng": 98.9881332, "name": "OS-19" },
+        { "lat": 18.781182, "lng": 98.9853992, "name": "OS-20" },
+        { "lat": 18.7812125, "lng": 98.9815601, "name": "OS-21" }
+      ]
+    },
+    {
+      "id": "os-seg-sw-corner",
+      "name": "SW Corner Entry",
+      "points": [
+        { "lat": 18.7812125, "lng": 98.9815601, "name": "OS-21" },
+        { "lat": 18.781332, "lng": 98.9778759, "name": "OS-22" },
+        { "lat": 18.7818602, "lng": 98.9774735, "name": "OS-23" }
+      ]
+    },
+    {
+      "id": "os-seg-west-lower",
+      "name": "Old City West (Arak Road South)",
+      "points": [
+        { "lat": 18.7818602, "lng": 98.9774735, "name": "OS-23" },
+        { "lat": 18.7888477, "lng": 98.9777676, "name": "OS-24" }
+      ]
+    },
+    {
+      "id": "os-seg-west-upper",
+      "name": "Old City West (Arak Road North)",
+      "points": [
+        { "lat": 18.7888477, "lng": 98.9777676, "name": "OS-24" },
+        { "lat": 18.7959848, "lng": 98.9783144, "name": "OS-1" }
       ]
     }
   ],
   "trips": [
     {
-      "id": "trip-full-ring",
-      "name": "Full Ring Delivery",
-      "segmentIds": ["ring-1-5", "ring-5-7", "ring-7-8", "ring-8"]
-    },
-    {
-      "id": "1141-Mahidol",
-      "name": "Highway 1141 Full Run",
-      "segmentIds": ["mah-seg-1", "mah-seg-2", "mah-seg-3", "mah-seg-4"]
+      "id": "nw-ring-to-kae-east",
+      "name": "NW Ring to Kaew Nawarat East",
+      "segmentIds": [
+        "ring-seg-1",
+        "conn-nw",
+        "os-seg-north-a",
+        "os-seg-north-b",
+        "conn-kae"
+      ]
     }
   ]
 }

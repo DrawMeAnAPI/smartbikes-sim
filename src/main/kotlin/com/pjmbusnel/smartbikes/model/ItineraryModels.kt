@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty
 
 data class Coordinate(
     val lat: Double,
-    val lng: Double
+    val lng: Double,
+    val name: String? = null
 )
 
 /**
@@ -22,6 +23,7 @@ data class Route(
 @com.fasterxml.jackson.annotation.JsonIgnoreProperties(ignoreUnknown = true)
 data class Segment(
     val id: String,
+    val name: String? = null,
     val points: List<Coordinate>
 )
 
