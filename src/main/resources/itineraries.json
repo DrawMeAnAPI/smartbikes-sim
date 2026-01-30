@@ -344,6 +344,51 @@
         "os-seg-north-b",
         "conn-kae"
       ]
+    },
+    {
+      "id": "trip-grand-ring",
+      "name": "Grand Northern Ring",
+      "segmentIds": ["ring-seg-1", "ring-seg-2", "ring-seg-3", "ring-seg-4", "ring-seg-5", "ring-seg-6"]
+    },
+    {
+      "id": "trip-full-moat",
+      "name": "Full Moat Circuit",
+      "segmentIds": [
+        "os-seg-north-a", "os-seg-north-b", "os-seg-east-a", "os-seg-east-b",
+        "os-seg-east-c", "os-seg-east-d", "os-seg-se-corner", "os-seg-south-a",
+        "os-seg-south-b", "os-seg-south-c", "os-seg-south-d", "os-seg-south-e",
+        "os-seg-sw-corner", "os-seg-west-lower", "os-seg-west-upper"
+      ]
+    },
+    {
+      "id": "trip-north-south-axial",
+      "name": "North Ring to South Arterial",
+      "segmentIds": ["ring-seg-3", "conn-n", "os-seg-north-b", "os-seg-east-a", "os-seg-east-b", "os-seg-east-c", "conn-s-arterial"]
+    },
+    {
+      "id": "trip-railway-spine",
+      "name": "Railway Station to Moat",
+      "segmentIds": ["conn-cha-east", "os-seg-east-c", "os-seg-east-b", "os-seg-east-a", "os-seg-north-b"]
+    },
+    {
+      "id": "trip-mahidol-ring-express",
+      "name": "Mahidol to Ring Road East",
+      "segmentIds": ["mah-seg-1", "mah-seg-2", "mah-seg-3", "mah-seg-4", "ring-seg-6", "ring-seg-5"]
+    },
+    {
+      "id": "trip-moat-se-exit",
+      "name": "North Gate to SE Exit",
+      "segmentIds": ["os-seg-north-a", "os-seg-north-b", "os-seg-east-a", "os-seg-east-b", "os-seg-east-c", "os-seg-east-d", "os-seg-se-corner", "conn-se-exit"]
+    },
+    {
+      "id": "trip-nw-diagonal",
+      "name": "NW Ring to Kaew Nawarat",
+      "segmentIds": ["conn-nw", "os-seg-north-a", "os-seg-north-b", "conn-kae"]
+    },
+    {
+      "id": "trip-mahidol-to-south-gate",
+      "name": "Mahidol to South Gate",
+      "segmentIds": ["mah-seg-2", "conn-s-arterial", "os-seg-south-c", "os-seg-south-b"]
     }
   ]
 }
