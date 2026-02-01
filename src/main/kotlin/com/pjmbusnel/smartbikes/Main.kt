@@ -2,6 +2,7 @@ package com.pjmbusnel.smartbikes
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.pjmbusnel.smartbikes.io.ItineraryLoader
+import com.pjmbusnel.smartbikes.model.BikeTripConfig
 import com.pjmbusnel.smartbikes.model.Telemetry
 import com.pjmbusnel.smartbikes.model.VehicleType
 import com.pjmbusnel.smartbikes.simulator.MovementEngine
@@ -12,7 +13,6 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
-import java.time.format.DateTimeFormatter
 import java.util.Collections.synchronizedSet
 import kotlin.time.Clock
 import com.pjmbusnel.smartbikes.model.Route as BikeRoute
@@ -20,14 +20,14 @@ import com.pjmbusnel.smartbikes.model.Route as BikeRoute
 // Global state for WebSocket sessions
 private val jsonMapper = jacksonObjectMapper()
 private val sessions = synchronizedSet(mutableSetOf<WebSocketServerSession>())
-private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
+val tickSeconds = 1
 
 fun main() {
     val server = embeddedServer(factory = Netty, port = 8080) {
         install(WebSockets)
         routing {
             webSocket("/fleet") {
-                sessions.add(this) // Ktor WebSocketServerSession
+                sessions.add(this)
                 try {
                     for (frame in incoming) { /* Keep alive */ }
                 } catch (e: Exception) {
@@ -37,43 +37,45 @@ fun main() {
                 }
             }
         }
-    }.start(wait = false)
+    }
 
-    runBlocking {
+    // Launch simulation coroutines in the background
+    CoroutineScope(Dispatchers.Default).launch {
         val loader = ItineraryLoader()
-        val routes = loader.loadAssembledRoutes()
+        val library = loader.loadTrips()
+        val fleet = loader.loadFleetConfig()
 
-        println("--- Starting Simulation ---")
-        val tickSeconds = 5
+        println("--- Starting Fleet Simulation ---")
 
-        // We create a list to track all our active jobs
-        val allJobs = mutableListOf<Job>()
+        fleet.forEach { config ->
+            val tripDef = library.trips.find { it.id == config.tripId }
 
-        routes.forEachIndexed { index, baseRoute ->
-            println("Launching fleet for trip: ${baseRoute.name}")
+            if (tripDef != null) {
+                launch {
+                    // Assemble route with proper point-by-point reversal
+                    val finalRoute = loader.assembleRoute(tripDef, library.segments, reverse = config.reverse)
+                    val vehicleId = if (config.reverse) "${config.id}-R" else config.id
+                    val vehicleType = VehicleType.valueOf(config.type.uppercase())
 
-            // 1. Launch Forward Vehicle for this specific trip
-            allJobs += launch {
-                // Give each trip a tiny staggered start so the logs are readable
-                delay(index * 500L)
-                runVehicle("F-${baseRoute.id}", baseRoute, VehicleType.BIKE, tickSeconds, this)
-            }
+                    println("Launching $vehicleId on ${finalRoute.name}")
 
-            // 2. Create and Launch Reverse Vehicle for this specific trip
-            val reverseRoute = baseRoute.copy(
-                id = "${baseRoute.id}-REV",
-                points = baseRoute.points.reversed()
-            )
-
-            allJobs += launch {
-                delay(index * 1000L + 500) // Slight offset from the forward vehicle
-                runVehicle("R-${baseRoute.id}", reverseRoute, VehicleType.MOTORBIKE, tickSeconds, this)
+                    runVehicle(
+                        id = vehicleId,
+                        initialRoute = finalRoute,
+                        initialType = vehicleType,
+                        tickSeconds = tickSeconds,
+                        scope = this,
+                        config = config
+                    )
+                }
+            } else {
+                println("Warning: Trip '${config.tripId}' not found for vehicle ${config.id}")
             }
         }
-
-        allJobs.joinAll()
-        println("All vehicles have reached their destinations.")
     }
+
+    println("Server starting...")
+    server.start(wait = true)
 }
 
 suspend fun runVehicle(
@@ -81,7 +83,8 @@ suspend fun runVehicle(
     initialRoute: BikeRoute,
     initialType: VehicleType,
     tickSeconds: Int,
-    scope: CoroutineScope
+    scope: CoroutineScope,
+    config: BikeTripConfig
 ) {
     var currentRoute = initialRoute
     var currentType = initialType
@@ -118,10 +121,14 @@ suspend fun runVehicle(
             delay(tickSeconds * 1000L)
         }
 
-        println("Vehicle $id reached end of leg. Reversing and swapping type...")
-        currentRoute = currentRoute.copy(
-            points = currentRoute.points.reversed()
-        )
+        // Apply Oscillate vs Loop Logic
+        if (config.oscillate) {
+            println("Vehicle $id reversing for return leg.")
+            currentRoute = currentRoute.copy(points = currentRoute.points.reversed())
+        } else {
+            println("Vehicle $id looping back to start (One-way).")
+            // No point reversal needed for one-way streets
+        }
         delay(2000L)
     }
 }

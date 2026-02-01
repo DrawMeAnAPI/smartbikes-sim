@@ -1,0 +1,20 @@
+[
+  {
+    "id": "B-001",
+    "type": "BIKE",
+    "tripId": "trip-full-moat",
+    "reverse": false
+  },
+  {
+    "id": "M-001",
+    "type": "MOTORBIKE",
+    "tripId": "trip-full-moat",
+    "reverse": true
+  },
+  {
+    "id": "B-002",
+    "type": "BIKE",
+    "tripId": "trip-mahidol-ring-express",
+    "reverse": false
+  }
+]
