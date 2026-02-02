@@ -21,10 +21,15 @@ data class Segment(
     val points: List<Coordinate>
 )
 
+data class DirectedSegment(
+    val segmentId: String,
+    val reversed: Boolean = false // If true, reverse this specific segment
+)
+
 data class TripDefinition(
     val id: String,
     val name: String,
-    @param:JsonProperty("segmentIds") val segmentIds: List<String>
+    val directedSegments: List<DirectedSegment> // Replaces List<String>
 )
 
 data class ItineraryLibrary(

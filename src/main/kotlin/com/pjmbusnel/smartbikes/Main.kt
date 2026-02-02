@@ -20,7 +20,7 @@ import com.pjmbusnel.smartbikes.model.Route as BikeRoute
 // Global state for WebSocket sessions
 private val jsonMapper = jacksonObjectMapper()
 private val sessions = synchronizedSet(mutableSetOf<WebSocketServerSession>())
-val tickSeconds = 1
+private val tickSeconds = 1
 
 fun main() {
     val server = embeddedServer(factory = Netty, port = 8080) {
@@ -53,7 +53,7 @@ fun main() {
             if (tripDef != null) {
                 launch {
                     // Assemble route with proper point-by-point reversal
-                    val finalRoute = loader.assembleRoute(tripDef, library.segments, reverse = config.reverse)
+                    val finalRoute = loader.assembleRoute(tripDef, library.segments, tripReverse = config.reverse)
                     val vehicleId = if (config.reverse) "${config.id}-R" else config.id
                     val vehicleType = VehicleType.valueOf(config.type.uppercase())
 
@@ -63,7 +63,6 @@ fun main() {
                         id = vehicleId,
                         initialRoute = finalRoute,
                         initialType = vehicleType,
-                        tickSeconds = tickSeconds,
                         scope = this,
                         config = config
                     )
@@ -82,7 +81,6 @@ suspend fun runVehicle(
     id: String,
     initialRoute: BikeRoute,
     initialType: VehicleType,
-    tickSeconds: Int,
     scope: CoroutineScope,
     config: BikeTripConfig
 ) {
