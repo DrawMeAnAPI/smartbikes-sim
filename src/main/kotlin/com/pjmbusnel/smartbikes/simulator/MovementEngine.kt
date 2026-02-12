@@ -10,7 +10,9 @@ class MovementEngine(
     private val baseSpeedKph: Double
 ) {
     private var currentPointIndex = 0
-    private var currentPosition = route.points.first()
+    // Backing property pattern: private mutable, public read-only
+    private var _currentPosition: Coordinate = route.points.first()
+    val currentPosition: Coordinate get() = _currentPosition
 
     // We store the "actual" current speed for reporting
     var currentSpeedKph: Double = baseSpeedKph
@@ -26,17 +28,17 @@ class MovementEngine(
         // 2. Convert current variable speed to meters per second
         val metersPerSecond = (currentSpeedKph * 1000.0) / 3600.0
         val nextWaypoint = route.points[currentPointIndex + 1]
-        val distanceToNext = PhysicsUtils.calculateDistance(currentPosition, nextWaypoint)
+        val distanceToNext = PhysicsUtils.calculateDistance(_currentPosition, nextWaypoint)
         val distanceTraveled = metersPerSecond * secondsPassed
 
         return if (distanceTraveled >= distanceToNext) {
             currentPointIndex++
-            currentPosition = nextWaypoint
-            currentPosition
+            _currentPosition = nextWaypoint
+            _currentPosition
         } else {
             val fraction = distanceTraveled / distanceToNext
-            currentPosition = PhysicsUtils.interpolate(currentPosition, nextWaypoint, fraction)
-            currentPosition
+            _currentPosition = PhysicsUtils.interpolate(_currentPosition, nextWaypoint, fraction)
+            _currentPosition
         }
     }
 
