@@ -34,6 +34,7 @@ fun main() {
                     println("Connection closed: ${e.message}")
                 } finally {
                     sessions.remove(this)
+                    broadcastSessionCount() // Broadcast update on leave
                 }
             }
         }
@@ -77,7 +78,7 @@ fun main() {
     server.start(wait = true)
 }
 
-suspend fun runVehicle(
+private suspend fun runVehicle(
     id: String,
     initialRoute: BikeRoute,
     initialType: VehicleType,
@@ -128,5 +129,26 @@ suspend fun runVehicle(
             // No point reversal needed for one-way streets
         }
         delay(2000L)
+    }
+}
+
+// Helper function to send the count to all active browsers
+private suspend fun broadcastSessionCount() {
+    val message = jsonMapper.writeValueAsString(mapOf(
+        "type" to "SESSION_COUNT",
+        "count" to sessions.size
+    ))
+
+    synchronized(sessions) {
+        sessions.forEach { session ->
+            // Use the session's own scope or launch a new one to avoid blocking
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    session.send(message)
+                } catch (e: Exception) {
+                    // Session might have closed during broadcast
+                }
+            }
+        }
     }
 }

@@ -27,6 +27,33 @@
         }
         .resizer:hover { background: var(--accent-color); }
 
+        .metrics-bar {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background-color: white;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-family: 'Inter', sans-serif;
+            position: relative;
+            z-index: 1000;
+        }
+        .metric-box {
+            text-align: center;
+        }
+        .metric-box .label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .metric-box .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
         /* Floating Legend Box */
         .map-legend {
             position: absolute;
@@ -118,6 +145,24 @@
 <body>
 
 <div class="container">
+    <div class="metrics-bar">
+        <div class="metric-box">
+            <span class="label">Active Vehicles</span>
+            <span id="metric-total-bikes" class="value">0</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Avg Speed (km/h)</span>
+            <span id="metric-avg-speed" class="value">0.0</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Total Distance</span>
+            <span id="metric-distance" class="value">0 km</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Connected Clients</span>
+            <span id="metric-sessions" class="value">0</span>
+        </div>
+    </div>
     <div id="map"></div>
     <div class="stats-overlay" id="stats">Connecting...</div>
 
@@ -147,18 +192,19 @@
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     const markers = {};
+    const fleetState = new Map(); // Track metrics state per vehicle
+
     const consoleLog = document.getElementById('console-log');
     const panel = document.getElementById('console-panel');
     const resizer = document.getElementById('resizer');
     const toggleBtn = document.getElementById('toggle-btn');
     const mapLegend = document.getElementById('map-legend');
-    const LEGEND_MARGIN = 20; // Distance between console and legend
+    const LEGEND_MARGIN = 20;
     let isCollapsed = false;
 
     // --- 1. Resizer Logic ---
     let isResizing = false;
 
-    // Helper function to keep them in sync
     function syncLegendPosition() {
         const panelHeight = panel.offsetHeight;
         mapLegend.style.bottom = (panelHeight + LEGEND_MARGIN) + "px";
@@ -172,10 +218,9 @@
     document.addEventListener('mousemove', (e) => {
         if (!isResizing || isCollapsed) return;
         const newHeight = window.innerHeight - e.clientY;
-        // Constraints: min 50px, max 80% of screen
         if (newHeight > 50 && newHeight < window.innerHeight * 0.8) {
             panel.style.height = newHeight + "px";
-            syncLegendPosition(); // Sync legend while dragging
+            syncLegendPosition();
             map.invalidateSize();
         }
     });
@@ -189,30 +234,66 @@
     function toggleConsole() {
         isCollapsed = !isCollapsed;
         panel.classList.toggle('collapsed');
-        // Update button text
         const toggleBtn = document.getElementById('toggle-btn');
         toggleBtn.innerText = isCollapsed ? 'SHOW CONSOLE' : 'HIDE CONSOLE';
-        // Hide resizer bar when console is collapsed so user doesn't drag it by accident
         document.getElementById('resizer').style.display = isCollapsed ? 'none' : 'block';
-        // Wait for the CSS transition of the 'collapsed' class to finish, then sync
         setTimeout(() => {
             syncLegendPosition();
             map.invalidateSize();
-        }, 110); // Matches the 0.1s CSS transition
+        }, 110);
     }
-    // Initial sync on load
     syncLegendPosition();
 
-    // --- 3. WebSocket Logic ---
+    // --- 3. Metrics Logic ---
+    function updateMetricsUI() {
+        // Total Active Vehicles
+        const totalBikes = fleetState.size;
+        document.getElementById('metric-total-bikes').innerText = totalBikes;
+
+        // Average Fleet Speed calculation
+        let speedSum = 0;
+        let motorbikesCount = 0;
+
+        fleetState.forEach(vehicle => {
+            speedSum += vehicle.speed;
+            if (vehicle.type === 'MOTORBIKE') motorbikesCount++;
+        });
+
+        const avgSpeed = totalBikes > 0 ? (speedSum / totalBikes).toFixed(1) : "0.0";
+        document.getElementById('metric-avg-speed').innerText = avgSpeed;
+
+        // Vehicle Type Breakdown: Motorbikes vs Bikes
+        const bikesCount = totalBikes - motorbikesCount;
+        document.getElementById('metric-distance').innerText = `${motorbikesCount}M / ${bikesCount}B`;
+
+        // Update the legacy sidebar stat
+        document.getElementById('stats').innerText = `Fleet: ${totalBikes}`;
+    }
+
+    // --- 4. WebSocket Logic ---
     const socket = new WebSocket('ws://localhost:8080/fleet');
 
     socket.onopen = () => { document.getElementById('status').innerText = "Online"; };
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
+
+        // Handle Session Count updates from Server
+        if (data.type === 'SESSION_COUNT') {
+            document.getElementById('metric-sessions').innerText = data.count;
+            return;
+        }
+
         const { bikeId, lat, lng, vehicleType, speedKph, timestamp } = data;
 
-        // Update Map
+        // Update Global Fleet State for Metrics
+        fleetState.set(bikeId, {
+            speed: speedKph,
+            type: vehicleType
+        });
+        updateMetricsUI();
+
+        // Update Map Markers
         if (markers[bikeId]) {
             markers[bikeId].setLatLng([lat, lng]);
         } else {
@@ -228,9 +309,8 @@
                 <b>Type:</b> ${vehicleType}<br>
                 <b>Speed:</b> ${speedKph.toFixed(1)} km/h
             `);
-        document.getElementById('stats').innerText = `Fleet: ${Object.keys(markers).length}`;
 
-        // Update Console (only if not collapsed for performance)
+        // Update Console Log
         if (!isCollapsed) {
             const time = new Date(timestamp).toLocaleTimeString();
             const entry = document.createElement('div');
