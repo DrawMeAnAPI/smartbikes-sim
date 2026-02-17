@@ -54,6 +54,49 @@
             color: #2c3e50;
         }
 
+        #vehicle-sidebar {
+            position: fixed;
+            right: 0;
+            top: 60px; /* Offset for your metrics bar */
+            width: 300px;
+            height: calc(100% - 60px);
+            background: white;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+            z-index: 1100; /* Above Leaflet controls */
+            transition: transform 0.3s ease;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar-hidden {
+            transform: translateX(100%);
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 15px;
+        }
+
+        .sidebar-value {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .sidebar-btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .sidebar-btn:hover { opacity: 0.9; }
+
         /* Floating Legend Box */
         .map-legend {
             position: absolute;
@@ -155,12 +198,25 @@
             <span id="metric-avg-speed" class="value">0.0</span>
         </div>
         <div class="metric-box">
-            <span class="label">Total Distance</span>
-            <span id="metric-distance" class="value">0 km</span>
+            <span class="label">Total Odometer</span>
+            <span id="metric-total-odometer" class="value">0.00 km</span>
         </div>
         <div class="metric-box">
-            <span class="label">Connected Clients</span>
+            <span class="label">Fleet Mix (M/B)</span>
+            <span id="metric-type-mix" class="value">0M / 0B</span>
+        </div>
+        <div class="metric-box">
+            <span class="label">Clients</span>
             <span id="metric-sessions" class="value">0</span>
+        </div>
+    </div>
+    <div id="vehicle-sidebar" class="sidebar-hidden">
+        <div class="sidebar-header">
+            <h3>Vehicle Details</h3>
+            <button onclick="closeSidebar()">×</button>
+        </div>
+        <div id="sidebar-content">
+            <p class="placeholder">Click a vehicle on the map to see details.</p>
         </div>
     </div>
     <div id="map"></div>
@@ -193,6 +249,8 @@
 
     const markers = {};
     const fleetState = new Map(); // Track metrics state per vehicle
+    let totalFleetMeters = 0; // Cumulative distance for Odometer
+    let selectedBikeId = null; // Currently tracked bike in sidebar
 
     const consoleLog = document.getElementById('console-log');
     const panel = document.getElementById('console-panel');
@@ -202,7 +260,6 @@
     const LEGEND_MARGIN = 20;
     let isCollapsed = false;
 
-    // --- 1. Resizer Logic ---
     let isResizing = false;
 
     function syncLegendPosition() {
@@ -230,7 +287,6 @@
         document.body.style.cursor = 'default';
     });
 
-    // --- 2. Toggle Logic ---
     function toggleConsole() {
         isCollapsed = !isCollapsed;
         panel.classList.toggle('collapsed');
@@ -244,13 +300,54 @@
     }
     syncLegendPosition();
 
-    // --- 3. Metrics Logic ---
+    function callDriver(bikeId) {
+        alert(`Initiating VOIP call to driver of ${bikeId}...`);
+    }
+
+    function orderRecall(bikeId) {
+        const confirmRecall = confirm(`Are you sure you want to recall ${bikeId} to the nearest hub?`);
+        if (confirmRecall) {
+            console.log(`[Fleet Command] Recall signal sent to ${bikeId}`);
+        }
+    }
+
+    function onMarkerClick(bikeId) {
+        selectedBikeId = bikeId;
+        document.getElementById('vehicle-sidebar').classList.remove('sidebar-hidden');
+        updateSidebarUI(bikeId);
+    }
+
+    function closeSidebar() {
+        selectedBikeId = null;
+        document.getElementById('vehicle-sidebar').classList.add('sidebar-hidden');
+    }
+
+    function updateSidebarUI(bikeId) {
+        const data = fleetState.get(bikeId);
+        if (!data) return;
+
+        const content = document.getElementById('sidebar-content');
+        content.innerHTML = `
+        <div class="detail-row"><span>ID:</span> <span class="sidebar-value">${bikeId}</span></div>
+        <div class="detail-row"><span>Type:</span> <span class="sidebar-value">${data.type}</span></div>
+        <div class="detail-row"><span>Speed:</span> <span class="sidebar-value">${data.speed.toFixed(1)} km/h</span></div>
+        <div class="detail-row"><span>Position:</span> <span class="sidebar-value">${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}</span></div>
+        <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
+
+        <button class="sidebar-btn" onclick="callDriver('${bikeId}')" style="background-color: #27ae60;">
+            CALL DRIVER
+        </button>
+        <button class="sidebar-btn" onclick="orderRecall('${bikeId}')" style="background-color: #e67e22;">
+            ORDER RECALL
+        </button>
+    `;
+    }
+
+    // --- Metrics Logic ---
     function updateMetricsUI() {
-        // Total Active Vehicles
         const totalBikes = fleetState.size;
         document.getElementById('metric-total-bikes').innerText = totalBikes;
 
-        // Average Fleet Speed calculation
         let speedSum = 0;
         let motorbikesCount = 0;
 
@@ -262,15 +359,17 @@
         const avgSpeed = totalBikes > 0 ? (speedSum / totalBikes).toFixed(1) : "0.0";
         document.getElementById('metric-avg-speed').innerText = avgSpeed;
 
+        // Odometer Metric
+        document.getElementById('metric-total-odometer').innerText = (totalFleetMeters / 1000).toFixed(2) + " km";
+
         // Vehicle Type Breakdown: Motorbikes vs Bikes
         const bikesCount = totalBikes - motorbikesCount;
-        document.getElementById('metric-distance').innerText = `${motorbikesCount}M / ${bikesCount}B`;
+        document.getElementById('metric-type-mix').innerText = `${motorbikesCount}M / ${bikesCount}B`;
 
-        // Update the legacy sidebar stat
         document.getElementById('stats').innerText = `Fleet: ${totalBikes}`;
     }
 
-    // --- 4. WebSocket Logic ---
+    // --- WebSocket Logic ---
     const socket = new WebSocket('ws://localhost:8080/fleet');
 
     socket.onopen = () => { document.getElementById('status').innerText = "Online"; };
@@ -278,7 +377,6 @@
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
-        // Handle Session Count updates from Server
         if (data.type === 'SESSION_COUNT') {
             document.getElementById('metric-sessions').innerText = data.count;
             return;
@@ -286,12 +384,23 @@
 
         const { bikeId, lat, lng, vehicleType, speedKph, timestamp } = data;
 
-        // Update Global Fleet State for Metrics
+        // 1. Calculate Odometer distance for this 1-second tick
+        const metersThisTick = (speedKph * 1000) / 3600;
+        totalFleetMeters += metersThisTick;
+
+        // 2. Update Fleet State
         fleetState.set(bikeId, {
             speed: speedKph,
-            type: vehicleType
+            type: vehicleType,
+            lat: lat,
+            lng: lng
         });
         updateMetricsUI();
+
+        // 3. Update Sidebar if this bike is selected
+        if (selectedBikeId === bikeId) {
+            updateSidebarUI(bikeId);
+        }
 
         // Update Map Markers
         if (markers[bikeId]) {
@@ -301,14 +410,10 @@
             markers[bikeId] = L.circleMarker([lat, lng], {
                 radius: 6, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8
             }).addTo(map);
-        }
 
-        // Update Popup with live info
-        markers[bikeId].bindPopup(`
-                <b>ID:</b> ${bikeId}<br>
-                <b>Type:</b> ${vehicleType}<br>
-                <b>Speed:</b> ${speedKph.toFixed(1)} km/h
-            `);
+            // Add click listener to select vehicle
+            markers[bikeId].on('click', () => onMarkerClick(bikeId));
+        }
 
         // Update Console Log
         if (!isCollapsed) {
