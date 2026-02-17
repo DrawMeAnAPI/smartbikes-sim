@@ -97,6 +97,16 @@
         }
         .sidebar-btn:hover { opacity: 0.9; }
 
+        /* Sidebar Alert Styles */
+        .low-battery {
+            color: #e74c3c !important; /* Urgent Red */
+            font-weight: bold;
+            animation: blinker 1.5s linear infinite;
+        }
+        @keyframes blinker {
+            50% { opacity: 0.4; }
+        }
+
         /* Floating Legend Box */
         .map-legend {
             position: absolute;
@@ -135,6 +145,7 @@
         }
 
         .dot.motorbike { background-color: #e74c3c; }
+        .dot.electric { background-color: #2ecc71; } /* Green for E-Motorbike */
         .dot.bike { background-color: #3498db; }
 
         /* Console Container with fixed initial height */
@@ -202,12 +213,8 @@
             <span id="metric-total-odometer" class="value">0.00 km</span>
         </div>
         <div class="metric-box">
-            <span class="label">Fleet Mix (M/B)</span>
-            <span id="metric-type-mix" class="value">0M / 0B</span>
-        </div>
-        <div class="metric-box">
-            <span class="label">Clients</span>
-            <span id="metric-sessions" class="value">0</span>
+            <span class="label">Fleet Mix (MB/EB)</span>
+            <span id="metric-type-mix" class="value">0MB / 0EB</span>
         </div>
     </div>
     <div id="vehicle-sidebar" class="sidebar-hidden">
@@ -220,14 +227,15 @@
         </div>
     </div>
     <div id="map"></div>
-    <div class="stats-overlay" id="stats">Connecting...</div>
 
     <div class="map-legend" id="map-legend">
         <div class="legend-item">
-            <div class="dot bike"></div> <span>Standard Bike</span>
+            <div class="dot motorbike"></div>
+            <span>Standard Motorbike (MB)</span>
         </div>
         <div class="legend-item">
-            <div class="dot motorbike"></div> <span>Motorbike</span>
+            <div class="dot electric"></div>
+            <span>Electric Motorbike (EB)</span>
         </div>
     </div>
 
@@ -327,10 +335,29 @@
         if (!data) return;
 
         const content = document.getElementById('sidebar-content');
+        const displayType = data.type === 'E_MOTORBIKE' ? 'Electric Motorbike' : 'Standard Motorbike';
+
+        // Battery Logic: Only E_MOTORBIKE has batteryLevel
+        let batteryHtml = "";
+        if (data.type === 'E_MOTORBIKE' && data.batteryLevel !== undefined && data.batteryLevel !== null) {
+            const isLow = data.batteryLevel < 15;
+            const alertClass = isLow ? 'low-battery' : '';
+            const alertText = isLow ? ' (LOW)' : '';
+
+            batteryHtml = `
+            <div class="detail-row">
+                <span>Battery:</span>
+                <span class="sidebar-value ${alertClass}">${data.batteryLevel.toFixed(1)}%${alertText}</span>
+            </div>
+        `;
+        }
+
+
         content.innerHTML = `
         <div class="detail-row"><span>ID:</span> <span class="sidebar-value">${bikeId}</span></div>
-        <div class="detail-row"><span>Type:</span> <span class="sidebar-value">${data.type}</span></div>
+        <div class="detail-row"><span>Type:</span> <span class="sidebar-value">${displayType}</span></div>
         <div class="detail-row"><span>Speed:</span> <span class="sidebar-value">${data.speed.toFixed(1)} km/h</span></div>
+        ${batteryHtml}
         <div class="detail-row"><span>Position:</span> <span class="sidebar-value">${data.lat.toFixed(4)}, ${data.lng.toFixed(4)}</span></div>
         <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
 
@@ -360,13 +387,11 @@
         document.getElementById('metric-avg-speed').innerText = avgSpeed;
 
         // Odometer Metric
-        document.getElementById('metric-total-odometer').innerText = (totalFleetMeters / 1000).toFixed(2) + " km";
+        document.getElementById('metric-total-odometer').innerText = (totalFleetMeters / 1000).toFixed(3) + " km";
 
-        // Vehicle Type Breakdown: Motorbikes vs Bikes
+        // Vehicle Type Breakdown: Motorbikes vs E_Motorbikes
         const bikesCount = totalBikes - motorbikesCount;
-        document.getElementById('metric-type-mix').innerText = `${motorbikesCount}M / ${bikesCount}B`;
-
-        document.getElementById('stats').innerText = `Fleet: ${totalBikes}`;
+        document.getElementById('metric-type-mix').innerText = `${motorbikesCount}MB / ${bikesCount}EB`;
     }
 
     // --- WebSocket Logic ---
@@ -377,10 +402,10 @@
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
-        if (data.type === 'SESSION_COUNT') {
-            document.getElementById('metric-sessions').innerText = data.count;
-            return;
-        }
+        //if (data.type === 'SESSION_COUNT') {
+            //document.getElementById('metric-sessions').innerText = data.count;
+            //return;
+        //}
 
         const { bikeId, lat, lng, vehicleType, speedKph, timestamp } = data;
 
@@ -393,7 +418,8 @@
             speed: speedKph,
             type: vehicleType,
             lat: lat,
-            lng: lng
+            lng: lng,
+            batteryLevel: data.batteryLevel
         });
         updateMetricsUI();
 
@@ -406,7 +432,7 @@
         if (markers[bikeId]) {
             markers[bikeId].setLatLng([lat, lng]);
         } else {
-            const color = vehicleType === 'MOTORBIKE' ? '#e74c3c' : '#3498db';
+            const color = vehicleType === 'E_MOTORBIKE' ? '#2ecc71' : '#e74c3c';
             markers[bikeId] = L.circleMarker([lat, lng], {
                 radius: 6, fillColor: color, color: "#fff", weight: 2, fillOpacity: 0.8
             }).addTo(map);
@@ -420,10 +446,14 @@
             const time = new Date(timestamp).toLocaleTimeString();
             const entry = document.createElement('div');
             entry.className = 'log-entry';
-            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-id">${bikeId}</span>: ${JSON.stringify(data)}`;
-            consoleLog.appendChild(entry);
-            consoleLog.scrollTop = consoleLog.scrollHeight;
-            if (consoleLog.childNodes.length > 50) consoleLog.removeChild(consoleLog.firstChild);
+            // only show ID, Speed, and Battery if available
+            const batteryInfo = data.batteryLevel ? ` | BAT: ${data.batteryLevel.toFixed(1)}%` : '';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-id">${bikeId}</span>: SPD: ${speedKph.toFixed(1)} km/h${batteryInfo}`;            // Newest on top
+            consoleLog.prepend(entry);
+            // Maintain a 30-entry window for performance
+            if (consoleLog.childNodes.length > 30) {
+                consoleLog.removeChild(consoleLog.lastChild);
+            }
         }
     };
 </script>

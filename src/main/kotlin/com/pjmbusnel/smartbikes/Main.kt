@@ -14,13 +14,14 @@ import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
 import java.util.Collections.synchronizedSet
+import kotlin.random.Random
 import kotlin.time.Clock
 import com.pjmbusnel.smartbikes.model.Route as BikeRoute
 
 // Global state for WebSocket sessions
 private val jsonMapper = jacksonObjectMapper()
 private val sessions = synchronizedSet(mutableSetOf<WebSocketServerSession>())
-private val tickSeconds = 1
+private val tickSeconds = 2
 
 fun main() {
     val server = embeddedServer(factory = Netty, port = 8080) {
@@ -66,7 +67,7 @@ fun main() {
                     runVehicle(
                         id = vehicleId,
                         initialRoute = finalRoute,
-                        initialType = vehicleType,
+                        vehicleType = vehicleType,
                         scope = this,
                         config = config
                     )
@@ -84,26 +85,28 @@ fun main() {
 private suspend fun runVehicle(
     id: String,
     initialRoute: BikeRoute,
-    initialType: VehicleType,
+    vehicleType: VehicleType,
     scope: CoroutineScope,
     config: BikeTripConfig
 ) {
     var currentRoute = initialRoute
-    var currentType = initialType
+    var battery = if (vehicleType == VehicleType.E_MOTORBIKE) Random.nextDouble(75.0, 99.5) else null
 
     while (true) {
-        val engine = MovementEngine(currentRoute, currentType.baseSpeedKph)
-        println("Vehicle $id starting leg as ${currentType.name} on route ${currentRoute.id}")
+        val engine = MovementEngine(currentRoute, vehicleType.baseSpeedKph)
+        println("Vehicle $id starting leg as ${vehicleType.name} on route ${currentRoute.id}")
 
         while (!engine.isFinished()) {
             val newPos = engine.tick(tickSeconds)
+            battery = battery?.let { (it - 0.01).coerceAtLeast(0.0) }
 
             val telemetry = Telemetry(
                 bikeId = id,
-                vehicleType = currentType.name,
+                vehicleType = vehicleType.name,
                 lat = newPos.lat,
                 lng = newPos.lng,
                 speedKph = engine.currentSpeedKph,
+                batteryLevel = battery,
                 timestamp = Clock.System.now().toString()
             )
 

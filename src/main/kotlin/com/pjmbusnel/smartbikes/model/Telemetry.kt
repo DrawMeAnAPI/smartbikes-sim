@@ -8,5 +8,6 @@ data class Telemetry(
     val lat: Double,
     val lng: Double,
     val speedKph: Double,
+    val batteryLevel: Double? = null, // only for electric
     val timestamp: String = Instant.now().toString()
 )
