@@ -54,4 +54,29 @@ class ItineraryLoader {
         }
         return Route(tripDef.id, tripDef.name, allPoints)
     }
+
+    /**
+     * Performs a "Smoke Test" to ensure all JSON files are internally consistent.
+     * Throws an IllegalStateException if a mismatch is found.
+     */
+    fun validateIntegrity(library: ItineraryLibrary, fleet: List<BikeTripConfig>) {
+        val tripIds = library.trips.map { it.id }.toSet()
+        val segmentIds = library.segments.map { it.id }.toSet()
+
+        fleet.forEach { bike ->
+            // 1. Check if the tripId exists
+            if (!tripIds.contains(bike.tripId)) {
+                throw IllegalStateException("Integrity Error: Bike '${bike.id}' refers to non-existent trip '${bike.tripId}'")
+            }
+
+            // 2. Check if all segments within that trip exist
+            val trip = library.trips.find { it.id == bike.tripId }
+            trip?.directedSegments?.forEach { dirSeg ->
+                if (!segmentIds.contains(dirSeg.segmentId)) {
+                    throw IllegalStateException("Integrity Error: Trip '${trip.id}' refers to non-existent segment '${dirSeg.segmentId}'")
+                }
+            }
+        }
+        println("--- Integrity Check Passed: Fleet and Infrastructure are synced ---")
+    }
 }

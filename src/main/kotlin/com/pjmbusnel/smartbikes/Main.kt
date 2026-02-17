@@ -46,6 +46,9 @@ fun main() {
         val library = loader.loadTrips()
         val fleet = loader.loadFleetConfig()
 
+        // Validate Integrity before launching any vehicles
+        loader.validateIntegrity(library, fleet)
+
         println("--- Starting Fleet Simulation ---")
 
         fleet.forEach { config ->
