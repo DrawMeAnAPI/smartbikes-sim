@@ -410,7 +410,7 @@
       "id": "trip-railway-spine",
       "name": "Railway Station to Moat",
       "directedSegments": [
-        { "segmentId": "conn-cha-east", "reversed": true },
+        { "segmentId": "conn-cha-muang", "reversed": true },
         { "segmentId": "os-seg-east-c", "reversed": true },
         { "segmentId": "os-seg-east-b", "reversed": true },
         { "segmentId": "os-seg-east-a", "reversed": true },
@@ -473,6 +473,61 @@
         { "segmentId": "mah-seg-3", "reversed": true },
         { "segmentId": "mah-seg-2", "reversed": true },
         { "segmentId": "mah-seg-1", "reversed": true }
+      ]
+    },
+    {
+      "id": "trip-mahidol-to-railway",
+      "name": "Airport Area to Railway Station",
+      "directedSegments": [
+        { "segmentId": "mah-seg-1", "reversed": false },
+        { "segmentId": "mah-seg-2", "reversed": false },
+        { "segmentId": "mah-seg-3", "reversed": false },
+        { "segmentId": "mah-seg-4", "reversed": false },
+        { "segmentId": "mah-seg-5", "reversed": false },
+        { "segmentId": "mah-seg-6", "reversed": false },
+        { "segmentId": "ring-seg-6", "reversed": true }
+      ]
+    },
+    {
+      "id": "trip-north-ring-to-kae-east",
+      "name": "North Ring Commute to Business District",
+      "directedSegments": [
+        { "segmentId": "ring-seg-3", "reversed": false },
+        { "segmentId": "ring-seg-4", "reversed": false },
+        { "segmentId": "conn-kae", "reversed": true }
+      ]
+    },
+    {
+      "id": "trip-moat-to-ring-east",
+      "name": "Tha Phae Gate to Ring Road East",
+      "directedSegments": [
+        { "segmentId": "os-seg-east-b", "reversed": false },
+        { "segmentId": "os-seg-east-c", "reversed": false },
+        { "segmentId": "conn-cha-east", "reversed": false },
+        { "segmentId": "ring-seg-6", "reversed": false }
+      ]
+    },
+    {
+      "id": "trip-south-gate-to-mahidol-west",
+      "name": "South Gate to Mahidol West",
+      "directedSegments": [
+        { "segmentId": "os-seg-south-b", "reversed": false },
+        { "segmentId": "os-seg-south-c", "reversed": false },
+        { "segmentId": "conn-s-arterial", "reversed": false },
+        { "segmentId": "mah-seg-3", "reversed": true },
+        { "segmentId": "mah-seg-2", "reversed": true },
+        { "segmentId": "mah-seg-1", "reversed": true }
+      ]
+    },
+    {
+      "id": "trip-eastern-arc",
+      "name": "Eastern Corridor Arc",
+      "directedSegments": [
+        { "segmentId": "conn-kae", "reversed": false },
+        { "segmentId": "ring-seg-5", "reversed": false },
+        { "segmentId": "ring-seg-6", "reversed": false },
+        { "segmentId": "mah-seg-6", "reversed": true },
+        { "segmentId": "mah-seg-5", "reversed": true }
       ]
     }
   ]
